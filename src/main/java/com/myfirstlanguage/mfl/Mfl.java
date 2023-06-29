@@ -40,4 +40,9 @@ public class Mfl {
             System.out.println(token);
         }
     }
+
+    static public void error(String message){
+        hadError = true;
+        System.err.println(message);
+    }
 }
