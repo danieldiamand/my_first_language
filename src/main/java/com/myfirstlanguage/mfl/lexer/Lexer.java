@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.myfirstlanguage.mfl.Mfl;
-import com.myfirstlanguage.mfl.lexer.TokenType.*;
 
 public class Lexer {
     private final String source;
@@ -49,7 +48,7 @@ public class Lexer {
             scanToken();
         }
 
-        tokens.add(new Token(TokenType.EOF, "", null));
+        tokens.add(new Token(TokenType.EOF, "", null, line));
         return tokens;
     }
     
@@ -92,7 +91,7 @@ public class Lexer {
             default:
                 if (isDigit(c)) { number();
                 } else if (isAlpha(c)) { identifier();
-                } else { Mfl.error("Unexpected character."); }  
+                } else { Mfl.error(line, "Unexpected character."); }  
                 break;
         }
     }
@@ -107,7 +106,7 @@ public class Lexer {
         }
 
         if (atEnd()) {
-            Mfl.error("Unterminated string.");
+            Mfl.error(line, "Unterminated string.");
             return;
         }
 
@@ -172,7 +171,7 @@ public class Lexer {
         }
         
         if (atEnd()) {
-            Mfl.error("Unterminated comment.");
+            Mfl.error(line, "Unterminated comment.");
             return;
         }
 
@@ -221,7 +220,7 @@ public class Lexer {
     // adding tokens:
     private void addToken(TokenType type, Object value) {
         String lexeme = source.substring(start, current);
-        tokens.add(new Token(type, lexeme, value));
+        tokens.add(new Token(type, lexeme, value, line));
     }
 
     private void addToken(TokenType type) {

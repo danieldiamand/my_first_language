@@ -2,10 +2,11 @@ package com.myfirstlanguage.mfl.paser;
 
 import com.myfirstlanguage.mfl.lexer.Token;
 
-abstract class Expr {
+public abstract class Expr {
     interface ExprVisitor<R> {
         R visit(Binary expr);
         R visit(Unary expr);
+        R visit(Grouping expr);
         R visit(Literal expr);
         R visit(Variable expr);
     }
@@ -30,12 +31,12 @@ abstract class Expr {
     }
 
     static class Unary extends Expr{
-        final Expr expression;
         final Token operator;
+        final Expr expression;
         
-        Unary(Expr expression, Token operator){
-            this.expression = expression;
+        Unary(Token operator, Expr expression){
             this.operator = operator;
+            this.expression = expression;
         }
 
         @Override
@@ -43,6 +44,19 @@ abstract class Expr {
             return visitor.visit(this);
         }
     }
+
+    static class Grouping extends Expr {
+        final Expr expression;
+        
+        Grouping(Expr expression) {
+        this.expression = expression;
+        }
+
+        @Override
+        <R> R accept(ExprVisitor<R> visitor) {
+        return visitor.visit(this);
+        }    
+  }
 
     static class Literal extends Expr {
         final Object value;

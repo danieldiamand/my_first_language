@@ -1,6 +1,6 @@
 package com.myfirstlanguage.mfl.lexer;
 
-enum TokenType {
+public enum TokenType {
     // Single-character tokens.
   LEFT_BRACKET, RIGHT_BRACKET, LEFT_BRACE, RIGHT_BRACE, //brace is a curly bracket
   COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
