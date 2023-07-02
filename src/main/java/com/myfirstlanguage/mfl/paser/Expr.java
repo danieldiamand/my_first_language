@@ -15,9 +15,28 @@ public abstract class Expr {
         R visit(Variable expr);
 
         R visit(Assign expr);
+
+        R visit(Logical expr);
     }
 
     public abstract <R> R accept(ExprVisitor<R> visitor);
+
+    public static class Logical extends Expr {
+        Logical(Expr left, Token operator, Expr right) {
+            this.left = left;
+            this.operator = operator;
+            this.right = right;
+        }
+
+        @Override
+        public <R> R accept(ExprVisitor<R> visitor) {
+            return visitor.visit(this);
+        }
+
+        public final Expr left;
+        public final Token operator;
+        public final Expr right;
+    }
 
     public static class Binary extends Expr {
         public final Expr left;

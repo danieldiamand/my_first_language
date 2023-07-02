@@ -56,11 +56,27 @@ public class Parser {
     }
 
     private Stmt statement() {
+        if (advanceIf(TokenType.IF))
+            return ifStatement();
         if (advanceIf(TokenType.PRINT))
             return printStatement();
         if (advanceIf(TokenType.LEFT_BRACE))
             return new Stmt.Block(block());
         return expressionStatement();
+    }
+
+    private Stmt ifStatement() {
+        advanceIfElseThrow(TokenType.LEFT_BRACKET, "Expect '(' after 'if'.");
+        Expr condition = expression();
+        advanceIfElseThrow(TokenType.RIGHT_BRACKET, "Expect ')' after if condition.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (advanceIf(TokenType.ELSE)) {
+            elseBranch = statement();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     private Stmt printStatement() {
@@ -93,7 +109,7 @@ public class Parser {
     }
 
     private Expr assignment() {
-        Expr expr = equality();
+        Expr expr = or();
 
         if (advanceIf(TokenType.EQUAL)) {
             Token equals = previous();
@@ -105,6 +121,30 @@ public class Parser {
             }
 
             error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
+    }
+
+    private Expr or() {
+        Expr expr = and();
+
+        while (advanceIf(TokenType.OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr and() {
+        Expr expr = equality();
+
+        while (advanceIf(TokenType.AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
         }
 
         return expr;

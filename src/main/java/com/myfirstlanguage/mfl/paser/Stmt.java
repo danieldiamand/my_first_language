@@ -15,9 +15,29 @@ public abstract class Stmt {
         R visit(Var stmt);
 
         R visit(Block stmt);
+
+        R visit(If stmt);
     }
 
     public abstract <R> R accept(StmtVisitor<R> visitor);
+
+    public static class If extends Stmt {
+        public final Expr condition;
+        public final Stmt thenBranch;
+        public final Stmt elseBranch;
+
+        If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
+            this.condition = condition;
+            this.thenBranch = thenBranch;
+            this.elseBranch = elseBranch;
+        }
+
+        @Override
+        public <R> R accept(StmtVisitor<R> visitor) {
+            return visitor.visit(this);
+        }
+
+    }
 
     public static class Block extends Stmt {
         public final List<Stmt> statements;

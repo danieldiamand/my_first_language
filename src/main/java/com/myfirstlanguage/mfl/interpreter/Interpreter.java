@@ -36,6 +36,16 @@ public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<V
 
     /* STATEMENT HANDLING */
     @Override
+    public Void visit(Stmt.If stmt) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+
+    @Override
     public Void visit(Stmt.Block stmt) {
         executeBlock(stmt.statements, new Environment(environment));
         return null;
@@ -80,6 +90,22 @@ public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<V
     }
 
     /* EXPRESSION HANDLING */
+    @Override
+    public Object visit(Expr.Logical expr) {
+        Object left = evaluate(expr.left);
+        if (expr.operator.type == TokenType.OR) {
+            if (isTruthy(left))
+                return left;
+        } else {
+            if (!isTruthy(left))
+                return left;
+        }
+
+        return evaluate(expr.right);
+    }
+
+    }
+
     @Override
     public Object visit(Expr.Assign expr) {
         Object value = evaluate(expr.value);
