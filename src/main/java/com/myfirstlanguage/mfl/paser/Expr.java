@@ -1,5 +1,7 @@
 package com.myfirstlanguage.mfl.paser;
 
+import java.util.List;
+
 import com.myfirstlanguage.mfl.lexer.Token;
 
 public abstract class Expr {
@@ -17,9 +19,28 @@ public abstract class Expr {
         R visit(Assign expr);
 
         R visit(Logical expr);
+
+        R visit(Call expr);
     }
 
     public abstract <R> R accept(ExprVisitor<R> visitor);
+
+    public static class Call extends Expr {
+        public final Expr callee;
+        public final Token paren;
+        public final List<Expr> arguments;
+
+        Call(Expr callee, Token paren, List<Expr> arguments) {
+            this.callee = callee;
+            this.paren = paren;
+            this.arguments = arguments;
+        }
+
+        @Override
+        public <R> R accept(ExprVisitor<R> visitor) {
+            return visitor.visit(this);
+        }
+    }
 
     public static class Logical extends Expr {
         Logical(Expr left, Token operator, Expr right) {

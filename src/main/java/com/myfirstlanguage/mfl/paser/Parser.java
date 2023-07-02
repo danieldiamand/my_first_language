@@ -37,11 +37,35 @@ public class Parser {
             if (advanceIf(TokenType.VAR)) {
                 return varDeclaration();
             }
+            if (advanceIf(TokenType.FUN)) {
+                return function("function");
+            }
             return statement();
         } catch (ParseError error) {
             synchronize();
             return null;
         }
+    }
+
+    private Stmt.Function function(String kind) {
+        Token name = advanceIfElseThrow(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+        advanceIfElseThrow(TokenType.LEFT_BRACKET, "Expect '{} after " + kind + " name.");
+        List<Token> parameters = new ArrayList<>();
+        if (!advanceIf(TokenType.RIGHT_BRACKET)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+
+                parameters.add(
+                        advanceIfElseThrow(TokenType.IDENTIFIER, "Expect parameter name."));
+            } while (advanceIf(TokenType.COMMA));
+        }
+        advanceIfElseThrow(TokenType.RIGHT_BRACKET, "Expect ')' after parameters.");
+
+        advanceIfElseThrow(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, parameters, body);
     }
 
     private Stmt varDeclaration() {
@@ -61,6 +85,8 @@ public class Parser {
             return ifStatement();
         if (advanceIf(TokenType.PRINT))
             return printStatement();
+        if (advanceIf(TokenType.RETURN))
+            return returnStatement();
         if (advanceIf(TokenType.WHILE))
             return whileStatement();
         if (advanceIf(TokenType.WHILE))
@@ -68,6 +94,17 @@ public class Parser {
         if (advanceIf(TokenType.LEFT_BRACE))
             return new Stmt.Block(block());
         return expressionStatement();
+    }
+
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+        if (!checkIf(TokenType.SEMICOLON)) {
+            value = expression();
+        }
+
+        advanceIfElseThrow(TokenType.SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
     }
 
     private Stmt whileStatement() {
@@ -252,7 +289,37 @@ public class Parser {
         if (advanceIf(TokenType.NOT, TokenType.MINUS)) {
             return new Expr.Unary(previous(), unary());
         }
-        return primary();
+        return call();
+    }
+
+    private Expr call() {
+        Expr expr = primary();
+        while (true) {
+            if (advanceIf(TokenType.LEFT_BRACKET)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    private Expr finishCall(Expr callee) {
+        List<Expr> arguments = new ArrayList<>();
+        if (!checkIf(TokenType.RIGHT_BRACKET)) {
+            do {
+                if (arguments.size() >= 255) {
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(expression());
+            } while (advanceIf(TokenType.COMMA));
+        }
+
+        Token paren = advanceIfElseThrow(TokenType.RIGHT_BRACKET,
+                "Expect ')' after arguments.");
+
+        return new Expr.Call(callee, paren, arguments);
     }
 
     private Expr primary() {

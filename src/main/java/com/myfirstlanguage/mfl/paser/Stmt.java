@@ -19,9 +19,44 @@ public abstract class Stmt {
         R visit(If stmt);
 
         R visit(While stmt);
+
+        R visit(Function stmt);
+
+         R visit(Return stmt);
     }
 
     public abstract <R> R accept(StmtVisitor<R> visitor);
+
+    public static class Return extends Stmt {
+                final Token keyword;
+        public final Expr value;
+        Return(Token keyword, Expr value) {
+            this.keyword = keyword;
+            this.value = value;
+        }
+
+        @Override
+        public <R> R accept(StmtVisitor<R> visitor) {
+            return visitor.visit(this);
+        }
+    }
+
+    public static class Function extends Stmt {
+        public final Token name;
+        public final List<Token> params;
+        public final List<Stmt> body;
+
+        Function(Token name, List<Token> params, List<Stmt> body) {
+            this.name = name;
+            this.params = params;
+            this.body = body;
+        }
+
+        @Override
+        public <R> R accept(StmtVisitor<R> visitor) {
+            return visitor.visit(this);
+        }
+    }
 
     public static class While extends Stmt {
         public final Expr condition;
