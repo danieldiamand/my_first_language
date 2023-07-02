@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import com.myfirstlanguage.mfl.lexer.Token;
-import com.myfirstlanguage.mfl.paser.AstPrinter;
 import com.myfirstlanguage.mfl.paser.Expr;
 import com.myfirstlanguage.mfl.paser.Parser;
 import com.myfirstlanguage.mfl.paser.Stmt;

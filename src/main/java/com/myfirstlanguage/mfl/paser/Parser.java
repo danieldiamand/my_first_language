@@ -34,7 +34,6 @@ public class Parser {
     private Stmt declaration() {
         try {
             if (advanceIf(TokenType.VAR)) {
-                System.out.println("here1");
                 return varDeclaration();
             }
             return statement();
@@ -59,7 +58,8 @@ public class Parser {
     private Stmt statement() {
         if (advanceIf(TokenType.PRINT))
             return printStatement();
-
+        if (advanceIf(TokenType.LEFT_BRACE))
+            return new Stmt.Block(block());
         return expressionStatement();
     }
 
@@ -76,6 +76,17 @@ public class Parser {
     }
 
     /* HANDLING EXPRESSIONS */
+
+    private List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+
+        while (!checkIf(TokenType.RIGHT_BRACE) && !atEnd()) {
+            statements.add(declaration());
+        }
+
+        advanceIfElseThrow(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
+    }
 
     private Expr expression() {
         return assignment();

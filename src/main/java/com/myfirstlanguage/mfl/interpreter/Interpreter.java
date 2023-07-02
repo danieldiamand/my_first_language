@@ -36,6 +36,12 @@ public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<V
 
     /* STATEMENT HANDLING */
     @Override
+    public Void visit(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    @Override
     public Void visit(Stmt.Var stmt) {
         Object value = null;
         if (stmt.initializer != null) {
@@ -59,16 +65,30 @@ public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<V
         return null;
     }
 
+    void executeBlock(List<Stmt> statements,
+            Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
+        }
+    }
+
     /* EXPRESSION HANDLING */
     @Override
-    public Object visit(Expr.Assign expr){
+    public Object visit(Expr.Assign expr) {
         Object value = evaluate(expr.value);
         environment.assign(expr.name, value);
         return value;
     }
 
     @Override
-    public Object visit(Expr.Variable expr){
+    public Object visit(Expr.Variable expr) {
         return environment.get(expr.name);
     }
 
@@ -144,7 +164,6 @@ public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<V
         // Unreachable.
         return null;
     }
-
 
     private boolean isEqual(Object a, Object b) {
         if (a == null && b == null)
