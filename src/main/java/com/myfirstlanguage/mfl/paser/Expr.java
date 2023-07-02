@@ -3,7 +3,7 @@ package com.myfirstlanguage.mfl.paser;
 import com.myfirstlanguage.mfl.lexer.Token;
 
 public abstract class Expr {
-    interface ExprVisitor<R> {
+    public interface ExprVisitor<R> {
         R visit(Binary expr);
         R visit(Unary expr);
         R visit(Grouping expr);
@@ -11,12 +11,12 @@ public abstract class Expr {
         R visit(Variable expr);
     }
 
-    abstract <R> R accept(ExprVisitor<R> visitor);
+    public abstract <R> R accept(ExprVisitor<R> visitor);
 
-    static class Binary extends Expr {
-        final Expr left;
-        final Token operator;
-        final Expr right;
+    public static class Binary extends Expr {
+        public final Expr left;
+        public final Token operator;
+        public final Expr right;
 
         Binary(Expr left, Token operator, Expr right) {
             this.left = left;
@@ -25,61 +25,61 @@ public abstract class Expr {
         }
 
         @Override
-        <R> R accept(ExprVisitor<R> visitor) {
+        public <R> R accept(ExprVisitor<R> visitor) {
             return visitor.visit(this);
         }
     }
 
-    static class Unary extends Expr{
-        final Token operator;
-        final Expr expression;
+    public static class Unary extends Expr{
+        public final Token operator;
+        public final Expr expression;
         
-        Unary(Token operator, Expr expression){
+        public Unary(Token operator, Expr expression){
             this.operator = operator;
             this.expression = expression;
         }
 
         @Override
-        <R> R accept(ExprVisitor<R> visitor) {
+        public <R> R accept(ExprVisitor<R> visitor) {
             return visitor.visit(this);
         }
     }
 
-    static class Grouping extends Expr {
-        final Expr expression;
+    public static class Grouping extends Expr {
+        public final Expr expression;
         
         Grouping(Expr expression) {
         this.expression = expression;
         }
 
         @Override
-        <R> R accept(ExprVisitor<R> visitor) {
+        public <R> R accept(ExprVisitor<R> visitor) {
         return visitor.visit(this);
         }    
   }
 
-    static class Literal extends Expr {
-        final Object value;
+    public static class Literal extends Expr {
+        public final Object value;
 
         Literal(Object value) {
             this.value = value;
         }
 
         @Override
-        <R> R accept(ExprVisitor<R> visitor) {
+        public <R> R accept(ExprVisitor<R> visitor) {
             return visitor.visit(this);
         }
     }
 
-    static class Variable extends Expr {
-        final Token name;
+    public static class Variable extends Expr {
+        public final Token name;
 
         Variable(Token name) {
              this.name = name;
         }
 
         @Override
-        <R> R accept(ExprVisitor<R> visitor) {
+        public <R> R accept(ExprVisitor<R> visitor) {
         return visitor.visit(this);
         }
     }

@@ -10,8 +10,11 @@ import com.myfirstlanguage.mfl.paser.AstPrinter;
 import com.myfirstlanguage.mfl.paser.Expr;
 import com.myfirstlanguage.mfl.paser.Parser;
 import com.myfirstlanguage.mfl.lexer.Lexer;
+import com.myfirstlanguage.mfl.interpreter.Interpreter;
+import com.myfirstlanguage.mfl.interpreter.RuntimeError;
 
 public class Mfl {
+    private static final Interpreter interpreter = new Interpreter();
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
 
@@ -19,7 +22,7 @@ public class Mfl {
         runPrompt();
     }
 
-    //This is how to REPL works
+    // This is how to REPL works
     private static void runPrompt() throws IOException {
         InputStreamReader input = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(input);
@@ -34,7 +37,7 @@ public class Mfl {
         }
     }
 
-    //The heart of our code
+    // The heart of our code
     private static void run(String source) {
         Lexer lexer = new Lexer(source);
         List<Token> tokens = lexer.scanTokens();
@@ -43,21 +46,28 @@ public class Mfl {
         Expr expression = parser.parse();
 
         // Stop if there was a syntax error.
-        if (hadError) return;
+        if (hadError)
+            return;
 
-        System.out.println(new AstPrinter().print(expression));
+        interpreter.interpret(expression);
     }
 
-    static public void error(int line, String message){
+    public static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() +
+                "\n[line " + error.token.line + "]");
+        hadRuntimeError = true;
+    }
+
+    static public void error(int line, String message) {
         report(line, "", message);
     }
 
-    static public void error(Token token, String message){
+    static public void error(Token token, String message) {
         report(token.line, token.lexeme, message);
     }
 
-    private static void report(int line, String identifier, String message){
-            hadError = true;
-            System.err.println("Error(line:" + line + ") "+ identifier + ", " + message);
+    private static void report(int line, String identifier, String message) {
+        hadError = true;
+        System.err.println("Error(line:" + line + ") " + identifier + ", " + message);
     }
 }
