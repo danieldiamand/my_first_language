@@ -3,12 +3,16 @@ package com.myfirstlanguage.mfl;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import com.myfirstlanguage.mfl.lexer.Token;
 import com.myfirstlanguage.mfl.paser.AstPrinter;
 import com.myfirstlanguage.mfl.paser.Expr;
 import com.myfirstlanguage.mfl.paser.Parser;
+import com.myfirstlanguage.mfl.paser.Stmt;
 import com.myfirstlanguage.mfl.lexer.Lexer;
 import com.myfirstlanguage.mfl.interpreter.Interpreter;
 import com.myfirstlanguage.mfl.interpreter.RuntimeError;
@@ -19,7 +23,24 @@ public class Mfl {
     static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
-        runPrompt();
+        if (args.length > 1) {
+            System.out.println("Usage: jlox [script]");
+            System.exit(64); // [64]
+        } else if (args.length == 1) {
+            runFile(args[0]);
+        } else {
+            runPrompt();
+        }
+    }
+
+    private static void runFile(String path) throws IOException {
+        byte[] bytes = Files.readAllBytes(Paths.get(path));
+        run(new String(bytes, Charset.defaultCharset()));
+
+        if (hadError)
+            System.exit(65);
+        if (hadRuntimeError)
+            System.exit(70);
     }
 
     // This is how to REPL works
@@ -43,13 +64,13 @@ public class Mfl {
         List<Token> tokens = lexer.scanTokens();
 
         Parser parser = new Parser(tokens);
-        Expr expression = parser.parse();
+        List<Stmt> statements = parser.parse();
 
         // Stop if there was a syntax error.
         if (hadError)
             return;
 
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
     }
 
     public static void runtimeError(RuntimeError error) {

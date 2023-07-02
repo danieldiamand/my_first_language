@@ -1,5 +1,6 @@
 package com.myfirstlanguage.mfl.paser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.myfirstlanguage.mfl.Mfl;
@@ -21,17 +22,81 @@ public class Parser {
      * We create a sort of list of operators where the expressions between call down
      * the functions.
      */
-    public Expr parse() {
+    public List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!atEnd()) {
+            statements.add(declaration());
+        }
+        return statements;
+    }
+
+    /* HANDLING STATEMENTS */
+    private Stmt declaration() {
         try {
-        return expression();
+            if (advanceIf(TokenType.VAR)) {
+                System.out.println("here1");
+                return varDeclaration();
+            }
+            return statement();
         } catch (ParseError error) {
-        return null;
+            synchronize();
+            return null;
         }
     }
 
+    private Stmt varDeclaration() {
+        Token name = advanceIfElseThrow(TokenType.IDENTIFIER, "Expect variable name.");
+
+        Expr initializer = null;
+        if (advanceIf(TokenType.EQUAL)) {
+            initializer = expression();
+        }
+
+        advanceIfElseThrow(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
+    }
+
+    private Stmt statement() {
+        if (advanceIf(TokenType.PRINT))
+            return printStatement();
+
+        return expressionStatement();
+    }
+
+    private Stmt printStatement() {
+        Expr value = expression();
+        advanceIfElseThrow(TokenType.SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        advanceIfElseThrow(TokenType.SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
+    }
+
+    /* HANDLING EXPRESSIONS */
 
     private Expr expression() {
-        return equality();
+        return assignment();
+    }
+
+    private Expr assignment() {
+        Expr expr = equality();
+
+        if (advanceIf(TokenType.EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable) expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     // == !=
@@ -94,6 +159,10 @@ public class Parser {
             return new Expr.Literal(previous().value);
         }
 
+        if (advanceIf(TokenType.IDENTIFIER)) {
+            return new Expr.Variable(previous());
+        }
+
         if (advanceIf(TokenType.LEFT_BRACKET)) {
             Expr expr = expression();
             advanceIfElseThrow(TokenType.RIGHT_BRACKET, "Expect ')' after expression.");
@@ -102,7 +171,7 @@ public class Parser {
 
         throw error(peek(), "Expect expression.");
     }
- 
+
     // helper functions:
     private Token peek() {
         return tokens.get(current);
@@ -128,6 +197,7 @@ public class Parser {
         return peek().type == type;
     }
 
+    // called match
     private boolean advanceIf(TokenType... types) {
         for (TokenType type : types) {
             if (checkIf(type)) {
@@ -139,8 +209,9 @@ public class Parser {
     }
 
     // error management:
-    
-    //When we find something we're not expecting we use synchronize to get us back in place and hopefully find more errors.
+
+    // When we find something we're not expecting we use synchronize to get us back
+    // in place and hopefully find more errors.
     private void synchronize() {
         advance();
 
@@ -158,7 +229,7 @@ public class Parser {
                 case PRINT:
                 case RETURN:
                     return;
-                default: //TODO: default here?
+                default: // TODO: default here?
             }
 
             advance();
@@ -168,10 +239,11 @@ public class Parser {
     private static class ParseError extends RuntimeException {
     }
 
+    // called consume
     private Token advanceIfElseThrow(TokenType type, String message) {
         if (checkIf(type))
             return advance();
-        else{
+        else {
             throw error(peek(), message);
         }
     }

@@ -6,19 +6,70 @@ import com.myfirstlanguage.mfl.paser.Expr.Grouping;
 import com.myfirstlanguage.mfl.paser.Expr.Literal;
 import com.myfirstlanguage.mfl.paser.Expr.Unary;
 import com.myfirstlanguage.mfl.paser.Expr.Variable;
+
+import java.util.List;
+
 import com.myfirstlanguage.mfl.Mfl;
 import com.myfirstlanguage.mfl.lexer.Token;
 import com.myfirstlanguage.mfl.lexer.TokenType;
+import com.myfirstlanguage.mfl.paser.Stmt;
+import com.myfirstlanguage.mfl.paser.Stmt.Expression;
+import com.myfirstlanguage.mfl.paser.Stmt.Print;
 
-public class Interpreter implements Expr.ExprVisitor<Object> {
+public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<Void> {
 
-    public void interpret(Expr expression) {
+    private Environment environment = new Environment();
+
+    public void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             Mfl.runtimeError(error);
         }
+    }
+
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+
+    /* STATEMENT HANDLING */
+    @Override
+    public Void visit(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Void visit(Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visit(Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
+    /* EXPRESSION HANDLING */
+    @Override
+    public Object visit(Expr.Assign expr){
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
+    }
+
+    @Override
+    public Object visit(Expr.Variable expr){
+        return environment.get(expr.name);
     }
 
     @Override
@@ -94,11 +145,6 @@ public class Interpreter implements Expr.ExprVisitor<Object> {
         return null;
     }
 
-    @Override
-    public Object visit(Variable expr) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visit'");
-    }
 
     private boolean isEqual(Object a, Object b) {
         if (a == null && b == null)
@@ -117,7 +163,8 @@ public class Interpreter implements Expr.ExprVisitor<Object> {
     }
 
     private String stringify(Object object) {
-        if (object == null) return "nil";
+        if (object == null)
+            return "nil";
 
         if (object instanceof Double) {
             String text = object.toString();
@@ -128,7 +175,7 @@ public class Interpreter implements Expr.ExprVisitor<Object> {
         }
 
         return object.toString();
-  }
+    }
 
     private void checkNumberOperand(Token operator, Object operand) {
         if (operand instanceof Double)
@@ -147,4 +194,5 @@ public class Interpreter implements Expr.ExprVisitor<Object> {
     private Object evaluate(Expr expr) {
         return expr.accept(this);
     }
+
 }
