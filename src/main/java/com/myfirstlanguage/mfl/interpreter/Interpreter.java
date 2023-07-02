@@ -36,6 +36,14 @@ public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<V
 
     /* STATEMENT HANDLING */
     @Override
+    public Void visit(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
+        return null;
+    }
+
+    @Override
     public Void visit(Stmt.If stmt) {
         if (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.thenBranch);
@@ -102,8 +110,6 @@ public class Interpreter implements Expr.ExprVisitor<Object>, Stmt.StmtVisitor<V
         }
 
         return evaluate(expr.right);
-    }
-
     }
 
     @Override

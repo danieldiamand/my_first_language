@@ -17,9 +17,26 @@ public abstract class Stmt {
         R visit(Block stmt);
 
         R visit(If stmt);
+
+        R visit(While stmt);
     }
 
     public abstract <R> R accept(StmtVisitor<R> visitor);
+
+    public static class While extends Stmt {
+        public final Expr condition;
+        public final Stmt body;
+
+        While(Expr condition, Stmt body) {
+            this.condition = condition;
+            this.body = body;
+        }
+
+        @Override
+        public <R> R accept(StmtVisitor<R> visitor) {
+            return visitor.visit(this);
+        }
+    }
 
     public static class If extends Stmt {
         public final Expr condition;
